@@ -122,20 +122,16 @@ API disponible en:
 
 ## 5) Configurar frontend
 
-> Este repositorio incluye el componente principal del dashboard y cliente API. Si tu app React/Vite aún no está inicializada, crea el proyecto y copia `frontend/src`.
+> Ahora `frontend/` ya incluye proyecto Vite completo (scripts y configuración Tailwind), por lo que no necesitas ejecutar `npx tailwindcss init -p`.
 
-### 5.1 Instalar dependencias mínimas sugeridas (en tu app frontend)
-
-```bash
-npm install axios recharts
-```
-
-Si usas Tailwind, configúralo en tu app Vite:
+### 5.1 Instalar dependencias del frontend
 
 ```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
+cd frontend
+npm install
 ```
+
+> Si antes te falló `npx tailwindcss init -p`, ya no hace falta: el repo trae `tailwind.config.js` y `postcss.config.js` listos.
 
 ### 5.2 Variables de entorno frontend
 
