@@ -227,3 +227,39 @@ Con esto, un usuario no puede ver ni alterar datos de otro usuario, incluso si i
 4. Migraciones (ej. Knex/Prisma/Umzug).
 5. Tests automáticos (unitarios + integración).
 6. Rotación/refresh de tokens y hardening de seguridad.
+
+
+---
+
+
+## 10) Solución al error visto en Windows/psql
+
+Si te aparece este error al ejecutar `sql/init.sql`:
+
+- `ERROR: no hay restricción unique que coincida ... categories`
+- y luego `ERROR: no existe la relación "transactions"`
+
+la causa era que faltaba una restricción única compuesta en `categories` para soportar la FK `(user_id, category_id)` de `transactions`.
+
+Ya quedó corregido en `sql/init.sql` con:
+- `categories_user_id_id_key UNIQUE (user_id, id)`
+
+### Cómo recuperarte si ya ejecutaste una versión anterior
+
+Opción A (rápida en desarrollo, borra datos):
+
+```bash
+psql -U postgres -d gestion_gastos -c "DROP TABLE IF EXISTS transactions CASCADE;"
+psql -U postgres -d gestion_gastos -c "DROP TABLE IF EXISTS categories CASCADE;"
+psql -U postgres -d gestion_gastos -c "DROP TABLE IF EXISTS users CASCADE;"
+psql -U postgres -d gestion_gastos -f sql/init.sql
+```
+
+Opción B (sin borrar `users/categories`, solo completar estructura):
+
+```bash
+psql -U postgres -d gestion_gastos -c "ALTER TABLE categories ADD CONSTRAINT categories_user_id_id_key UNIQUE (user_id, id);"
+psql -U postgres -d gestion_gastos -f sql/init.sql
+```
+
+> En la versión actual del script, esa `ALTER TABLE` ya se ejecuta de forma segura dentro de un bloque `DO`, por lo que futuras corridas son idempotentes.

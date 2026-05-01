@@ -25,6 +25,18 @@ CREATE TABLE IF NOT EXISTS categories (
   UNIQUE(user_id, name, type)
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'categories_user_id_id_key'
+  ) THEN
+    ALTER TABLE categories
+      ADD CONSTRAINT categories_user_id_id_key UNIQUE (user_id, id);
+  END IF;
+END$$;
+
 CREATE TABLE IF NOT EXISTS transactions (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
