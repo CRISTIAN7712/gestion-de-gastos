@@ -93,6 +93,8 @@ cd backend
 npm install
 ```
 
+> Nota: no depende de `react-router-dom`; la navegación básica está implementada sin librería externa para evitar errores de resolución de paquetes.
+
 ### 4.2 Crear variables de entorno
 
 ```bash
@@ -130,6 +132,8 @@ API disponible en:
 cd frontend
 npm install
 ```
+
+> Nota: no depende de `react-router-dom`; la navegación básica está implementada sin librería externa para evitar errores de resolución de paquetes.
 
 > Si antes te falló `npx tailwindcss init -p`, ya no hace falta: el repo trae `tailwind.config.js` y `postcss.config.js` listos.
 

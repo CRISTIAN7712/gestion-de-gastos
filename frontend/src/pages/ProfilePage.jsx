@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProfilePage() {
+export default function ProfilePage({ go }) {
   const { user, setUser, logout } = useAuth();
   const [form, setForm] = useState({ username: user?.username || '', email: user?.email || '' });
   const [msg, setMsg] = useState('');
@@ -23,7 +23,10 @@ export default function ProfilePage() {
         {msg && <p className="text-sm text-green-600">{msg}</p>}
         <button className="rounded bg-indigo-600 p-2 text-white">Guardar cambios</button>
       </form>
-      <button className="mt-4 rounded bg-slate-700 p-2 text-white" onClick={logout}>Cerrar sesión</button>
+      <div className="mt-4 flex gap-3">
+        <button className="rounded bg-slate-200 p-2" onClick={() => go('/')}>Volver</button>
+        <button className="rounded bg-slate-700 p-2 text-white" onClick={logout}>Cerrar sesión</button>
+      </div>
     </main>
   );
 }

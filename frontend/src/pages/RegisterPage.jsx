@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function RegisterPage() {
+export default function RegisterPage({ go }) {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
 
@@ -13,7 +11,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await register(form);
-      navigate('/');
+      go('/');
     } catch (err) {
       setError(err?.response?.data?.message || 'No se pudo registrar');
     }
@@ -29,7 +27,7 @@ export default function RegisterPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button className="w-full rounded bg-indigo-600 p-2 text-white">Crear cuenta</button>
       </form>
-      <p className="mt-3 text-sm">¿Ya tienes cuenta? <Link className="text-indigo-600" to="/login">Inicia sesión</Link></p>
+      <p className="mt-3 text-sm">¿Ya tienes cuenta? <button className="text-indigo-600" onClick={() => go('/login')}>Inicia sesión</button></p>
     </main>
   );
 }

@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function LoginPage() {
+export default function LoginPage({ go }) {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
 
@@ -13,7 +11,7 @@ export default function LoginPage() {
     setError('');
     try {
       await login(form.email, form.password);
-      navigate('/');
+      go('/');
     } catch (err) {
       setError(err?.response?.data?.message || 'No se pudo iniciar sesión');
     }
@@ -28,7 +26,7 @@ export default function LoginPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button className="w-full rounded bg-indigo-600 p-2 text-white">Entrar</button>
       </form>
-      <p className="mt-3 text-sm">¿No tienes cuenta? <Link className="text-indigo-600" to="/register">Regístrate</Link></p>
+      <p className="mt-3 text-sm">¿No tienes cuenta? <button className="text-indigo-600" onClick={() => go('/register')}>Regístrate</button></p>
     </main>
   );
 }
