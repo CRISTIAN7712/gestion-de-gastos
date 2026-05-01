@@ -14,23 +14,41 @@ export function AuthProvider({ children }) {
         setLoading(false);
         return;
       }
+
       try {
-        const { data } = await api.get('/users/me');
-        setUser(data);
+        const cached = localStorage.getItem('user');
+        if (cached) setUser(JSON.parse(cached));
+
+        try {
+          const { data } = await api.get('/users/me');
+          setUser(data);
+          localStorage.setItem('user', JSON.stringify(data));
+        } catch (err) {
+          if (err?.response?.status === 404) {
+            const { data } = await api.get('/auth/me');
+            setUser(data);
+            localStorage.setItem('user', JSON.stringify(data));
+          } else {
+            throw err;
+          }
+        }
       } catch {
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setToken(null);
         setUser(null);
       } finally {
         setLoading(false);
       }
     }
+
     loadMe();
   }, [token]);
 
   async function login(email, password) {
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
   }
@@ -38,18 +56,19 @@ export function AuthProvider({ children }) {
   async function register(payload) {
     const { data } = await api.post('/auth/register', payload);
     localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
   }
 
   function logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   }
 
   const value = useMemo(() => ({ token, user, loading, login, register, logout, setUser }), [token, user, loading]);
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

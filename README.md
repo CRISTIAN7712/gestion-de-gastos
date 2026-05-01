@@ -209,6 +209,7 @@ Con esto, un usuario no puede ver ni alterar datos de otro usuario, incluso si i
 ### Auth
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `GET /api/auth/me` (requiere JWT)
 
 ### Transacciones
 - `GET /api/transactions`
@@ -268,3 +269,9 @@ psql -U postgres -d gestion_gastos -f sql/init.sql
 ```
 
 > En la versión actual del script, esa `ALTER TABLE` ya se ejecuta de forma segura dentro de un bloque `DO`, por lo que futuras corridas son idempotentes.
+
+
+### Nota de compatibilidad de sesión
+
+Si ves 404 en `/api/users/me`, el frontend intentará automáticamente `/api/auth/me` como fallback.
+Aun así, reinicia el backend tras actualizar código para asegurar que rutas nuevas estén cargadas.

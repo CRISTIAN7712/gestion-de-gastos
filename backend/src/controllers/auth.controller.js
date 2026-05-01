@@ -43,3 +43,10 @@ export async function login(req, res) {
   const token = signToken(user);
   return res.json({ token, user: { id: user.id, username: user.username, email: user.email } });
 }
+
+
+export async function me(req, res) {
+  const { rows } = await pool.query('SELECT id, username, email, created_at FROM users WHERE id = $1', [req.user.id]);
+  if (!rows[0]) return res.status(404).json({ message: 'Usuario no encontrado' });
+  return res.json(rows[0]);
+}
