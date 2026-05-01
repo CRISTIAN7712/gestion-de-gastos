@@ -210,6 +210,11 @@ Con esto, un usuario no puede ver ni alterar datos de otro usuario, incluso si i
 - `GET /api/transactions`
   - Soporta query params opcionales: `year`, `month`
 
+### Usuarios
+- `GET /api/users/me`
+- `PUT /api/users/me`
+- `PUT /api/users/me/password`
+
 ### Reportes
 - `GET /api/reports/summary?year=YYYY&month=MM`
 
