@@ -214,6 +214,12 @@ Con esto, un usuario no puede ver ni alterar datos de otro usuario, incluso si i
 ### Transacciones
 - `GET /api/transactions`
   - Soporta query params opcionales: `year`, `month`
+- `POST /api/transactions`
+
+### Categorías
+- `GET /api/categories`
+- `GET /api/categories?type=expense|income`
+- `POST /api/categories`
 
 ### Usuarios
 - `GET /api/users/me`

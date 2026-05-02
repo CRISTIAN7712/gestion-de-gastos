@@ -7,7 +7,7 @@ export async function listTransactions(req, res) {
 
   if (month && year) {
     values.push(Number(year), Number(month));
-    where += ' AND t.transaction_date >= make_date($2, $3, 1) AND t.transaction_date < (make_date($2, $3, 1) + INTERVAL \'1 month\')';
+    where += " AND t.transaction_date >= make_date($2, $3, 1) AND t.transaction_date < (make_date($2, $3, 1) + INTERVAL '1 month')";
   }
 
   const sql = `
@@ -23,90 +23,28 @@ export async function listTransactions(req, res) {
 }
 
 export async function createTransaction(req, res) {
+  const { category_id, amount, transaction_date, description, type } = req.body;
+  if (!category_id || !amount || !transaction_date || !type) {
+    return res.status(400).json({ message: 'category_id, amount, transaction_date y type son obligatorios' });
+  }
+
+  const sql = `
+    INSERT INTO transactions (user_id, category_id, amount, transaction_date, description, type)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING id, user_id, category_id, amount, transaction_date, description, type, created_at
+  `;
+
   try {
-    const {
+    const { rows } = await pool.query(sql, [
+      req.user.id,
+      Number(category_id),
       amount,
-      description,
-      category_id,
-      category,
       transaction_date,
-      date,
-      type,
-      recurrence = 'none',
-      recurrence_every_days
-    } = req.body;
-    const user_id = req.user.id;
-    const normalizedAmount = Number(amount);
-    const normalizedDate = transaction_date || date || new Date();
-
-    // Validaciones
-    if (!normalizedAmount || !type) {
-      return res.status(400).json({ error: 'Amount and type are required' });
-    }
-
-    let resolvedCategoryId = category_id;
-
-    if (!resolvedCategoryId && category) {
-      const upsertCategory = await pool.query(
-        `INSERT INTO categories (user_id, name, type)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (user_id, name, type)
-         DO UPDATE SET name = EXCLUDED.name
-         RETURNING id`,
-        [user_id, category.trim(), type]
-      );
-      resolvedCategoryId = upsertCategory.rows[0].id;
-    }
-
-    if (!resolvedCategoryId) {
-      return res.status(400).json({ error: 'category_id or category is required' });
-    }
-
-    const allowedRecurrence = ['none', 'weekly', 'biweekly', 'monthly', 'custom_days'];
-    if (!allowedRecurrence.includes(recurrence)) {
-      return res.status(400).json({ error: 'Invalid recurrence value' });
-    }
-
-    let normalizedRecurrenceEveryDays = null;
-    if (recurrence === 'custom_days') {
-      normalizedRecurrenceEveryDays = Number(recurrence_every_days);
-      if (!normalizedRecurrenceEveryDays || normalizedRecurrenceEveryDays < 1) {
-        return res.status(400).json({ error: 'recurrence_every_days must be greater than 0 for custom_days' });
-      }
-    }
-
-    // Verificar que la categoría pertenece al usuario
-    const categoryCheck = await pool.query(
-      'SELECT id FROM categories WHERE id = $1 AND user_id = $2',
-      [resolvedCategoryId, user_id]
-    );
-    
-    if (categoryCheck.rows.length === 0) {
-      return res.status(400).json({ error: 'Invalid category' });
-    }
-
-    // Insertar transacción
-    const result = await pool.query(
-      `INSERT INTO transactions (
-        user_id, amount, description, category_id, transaction_date, type, recurrence, recurrence_every_days
-      )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        user_id,
-        normalizedAmount,
-        description || '',
-        resolvedCategoryId,
-        normalizedDate,
-        type,
-        recurrence,
-        normalizedRecurrenceEveryDays
-      ]
-    );
-
-    return res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating transaction:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+      description || null,
+      type
+    ]);
+    return res.status(201).json(rows[0]);
+  } catch {
+    return res.status(400).json({ message: 'Categoría inválida o no pertenece al usuario' });
   }
 }
