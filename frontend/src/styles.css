@@ -1,3 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    @apply antialiased;
+  }
+  
+  html {
+    @apply transition-colors duration-300 ease-luxury;
+  }
+  
+  body {
+    @apply bg-finance-light text-finance-dark font-sans;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    @apply transition-colors duration-300 ease-luxury;
+  }
+  
+  /* ← Dark mode para body */
+  .dark body {
+    @apply bg-finance-dark-bg text-finance-dark-text;
+    background: linear-gradient(180deg, #0a0f1d 0%, #0f172a 100%);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight text-finance-base;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-finance-dark-text;
+  }
+  
+  h1 { @apply text-3xl md:text-4xl; }
+  h2 { @apply text-2xl md:text-3xl; }
+  h3 { @apply text-xl md:text-2xl; }
+  
+  p {
+    @apply text-finance-muted leading-relaxed;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark p {
+    @apply text-finance-dark-muted;
+  }
+}
+
+@layer components {
+  /* Botones elegantes con soporte dark */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 font-medium transition-all duration-200 ease-luxury focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-finance-light disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .dark .btn {
+    @apply focus:ring-offset-finance-dark-bg;
+  }
+  
+  .btn-primary {
+    @apply btn bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-elevated hover:from-primary-700 hover:to-primary-800 hover:shadow-luxury active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply btn bg-finance-card text-finance-base border border-finance-border shadow-soft hover:bg-finance-light hover:border-primary-300 hover:text-primary-700 active:scale-[0.98];
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-finance-dark-card text-finance-dark-muted border-finance-dark-border hover:bg-finance-dark-border hover:text-finance-dark-text hover:border-primary-500;
+  }
+  
+  .btn-ghost {
+    @apply btn text-finance-muted hover:text-finance-base hover:bg-finance-card/60;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .btn-ghost {
+    @apply text-finance-dark-muted hover:text-finance-dark-text hover:bg-finance-dark-card/60;
+  }
+  
+  .btn-success {
+    @apply btn bg-gradient-to-br from-accent-emerald to-emerald-600 text-white shadow-soft hover:shadow-elevated active:scale-[0.98];
+  }
+  
+  .btn-danger {
+    @apply btn bg-gradient-to-br from-accent-ruby to-red-600 text-white shadow-soft hover:shadow-elevated active:scale-[0.98];
+  }
+  
+  /* Tarjetas premium con dark mode */
+  .card {
+    @apply bg-finance-card rounded-2xl border border-finance-border shadow-soft transition-all duration-300 ease-luxury hover:shadow-elevated;
+    @apply transition-colors duration-300;
+  }
+  
+  .dark .card {
+    @apply bg-finance-dark-card border-finance-dark-border;
+  }
+  
+  .card-elevated {
+    @apply card shadow-elevated hover:shadow-luxury;
+  }
+  
+  .dark .card-elevated {
+    @apply shadow-dark-elevated hover:shadow-luxury;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-finance-border;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .card-header {
+    @apply border-finance-dark-border;
+  }
+  
+  .card-body {
+    @apply px-6 py-5;
+  }
+  
+  .card-footer {
+    @apply px-6 py-4 border-t border-finance-border bg-finance-light/50;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .card-footer {
+    @apply border-finance-dark-border bg-finance-dark-card/50;
+  }
+  
+  /* Inputs elegantes con dark mode */
+  .input {
+    @apply w-full rounded-xl border border-finance-border bg-finance-card px-4 py-3 text-finance-dark placeholder-finance-muted/70 transition-all duration-200 ease-luxury focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:outline-none hover:border-primary-300;
+  }
+  
+  .dark .input {
+    @apply bg-finance-dark-card text-finance-dark-text placeholder-finance-dark-muted/70 border-finance-dark-border focus:border-primary-500 hover:border-primary-600;
+  }
+  
+  .input-error {
+    @apply input border-accent-ruby/50 focus:border-accent-ruby focus:ring-accent-ruby/10;
+  }
+  
+  .select {
+    @apply input pr-10 appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-[right_1rem_center] bg-no-repeat;
+  }
+  
+  .dark .select {
+    @apply bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')];
+  }
+  
+  /* Badges con dark mode */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  }
+  
+  .badge-success { @apply badge bg-emerald-50 text-accent-emerald border border-emerald-200; }
+  .dark .badge-success { @apply bg-emerald-900/30 text-emerald-400 border-emerald-800/50; }
+  
+  .badge-warning { @apply badge bg-amber-50 text-amber-700 border border-amber-200; }
+  .dark .badge-warning { @apply bg-amber-900/30 text-amber-400 border-amber-800/50; }
+  
+  .badge-danger { @apply badge bg-red-50 text-accent-ruby border border-red-200; }
+  .dark .badge-danger { @apply bg-red-900/30 text-red-400 border-red-800/50; }
+  
+  .badge-info { @apply badge bg-primary-50 text-primary-700 border border-primary-200; }
+  .dark .badge-info { @apply bg-primary-900/30 text-primary-400 border-primary-800/50; }
+  
+  /* Layout */
+  .container-premium {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  
+  .page-header {
+    @apply mb-8 pt-6 pb-4;
+  }
+  
+  .page-title {
+    @apply text-3xl font-bold text-finance-dark mb-2;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .page-title {
+    @apply text-finance-dark-text;
+  }
+  
+  .page-subtitle {
+    @apply text-finance-muted text-lg;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .page-subtitle {
+    @apply text-finance-dark-muted;
+  }
+  
+  /* Header con glassmorphism y dark mode */
+  .header-glass {
+    @apply sticky top-0 z-50 backdrop-blur-xl bg-finance-card/80 border-b border-finance-border/60 shadow-soft;
+    @apply transition-colors duration-300;
+  }
+  
+  .dark .header-glass {
+    @apply bg-finance-dark-card/80 border-finance-dark-border/60;
+  }
+  
+  /* Toggle de dark mode */
+  .theme-toggle {
+    @apply relative w-12 h-7 rounded-full bg-finance-border dark:bg-finance-dark-border p-1 cursor-pointer transition-colors duration-300;
+  }
+  
+  .theme-toggle-ball {
+    @apply absolute top-1 left-1 w-5 h-5 rounded-full bg-white dark:bg-finance-dark-text shadow-soft transition-transform duration-300 ease-luxury;
+  }
+  
+  .theme-toggle.active .theme-toggle-ball {
+    @apply translate-x-5;
+  }
+  
+  /* Gradients decorativos */
+  .gradient-bg {
+    @apply bg-gradient-to-br from-primary-900 via-primary-800 to-primary-950;
+  }
+  
+  .dark .gradient-bg {
+    @apply from-finance-dark-bg via-primary-950 to-finance-dark-bg;
+  }
+  
+  .gradient-card {
+    @apply relative overflow-hidden;
+  }
+  
+  .gradient-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-primary-600/10 to-transparent pointer-events-none;
+  }
+  
+  /* Animaciones de entrada */
+  .animate-enter {
+    @apply animate-fade-in;
+  }
+  
+  .animate-enter-delay {
+    @apply animate-slide-up;
+  }
+  
+  /* Scrollbar elegante con dark mode */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-finance-muted/30 rounded-full hover:bg-finance-muted/50 transition-colors;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-finance-dark-muted/30 hover:bg-finance-dark-muted/50;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800;
+    @apply transition-colors duration-200;
+  }
+  
+  .dark .text-gradient {
+    @apply from-primary-400 to-primary-300;
+  }
+  
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-gold to-amber-500;
+  }
+  
+  .backdrop-blur-premium {
+    @apply backdrop-blur-xl bg-finance-card/80 border border-finance-border/50;
+    @apply transition-colors duration-300;
+  }
+  
+  .dark .backdrop-blur-premium {
+    @apply bg-finance-dark-card/80 border-finance-dark-border/50;
+  }
+  
+  .ring-focus {
+    @apply focus:ring-4 focus:ring-primary-500/20 focus:ring-offset-2 focus:ring-offset-finance-light;
+  }
+  
+  .dark .ring-focus {
+    @apply focus:ring-offset-finance-dark-bg;
+  }
+}
