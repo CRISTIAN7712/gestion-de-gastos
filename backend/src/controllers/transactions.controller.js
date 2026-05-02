@@ -24,7 +24,17 @@ export async function listTransactions(req, res) {
 
 export async function createTransaction(req, res) {
   try {
-    const { amount, description, category_id, category, transaction_date, date, type } = req.body;
+    const {
+      amount,
+      description,
+      category_id,
+      category,
+      transaction_date,
+      date,
+      type,
+      recurrence = 'none',
+      recurrence_every_days
+    } = req.body;
     const user_id = req.user.id;
     const normalizedAmount = Number(amount);
     const normalizedDate = transaction_date || date || new Date();
@@ -52,6 +62,19 @@ export async function createTransaction(req, res) {
       return res.status(400).json({ error: 'category_id or category is required' });
     }
 
+    const allowedRecurrence = ['none', 'weekly', 'biweekly', 'monthly', 'custom_days'];
+    if (!allowedRecurrence.includes(recurrence)) {
+      return res.status(400).json({ error: 'Invalid recurrence value' });
+    }
+
+    let normalizedRecurrenceEveryDays = null;
+    if (recurrence === 'custom_days') {
+      normalizedRecurrenceEveryDays = Number(recurrence_every_days);
+      if (!normalizedRecurrenceEveryDays || normalizedRecurrenceEveryDays < 1) {
+        return res.status(400).json({ error: 'recurrence_every_days must be greater than 0 for custom_days' });
+      }
+    }
+
     // Verificar que la categoría pertenece al usuario
     const categoryCheck = await pool.query(
       'SELECT id FROM categories WHERE id = $1 AND user_id = $2',
@@ -64,10 +87,21 @@ export async function createTransaction(req, res) {
 
     // Insertar transacción
     const result = await pool.query(
-      `INSERT INTO transactions (user_id, amount, description, category_id, transaction_date, type)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO transactions (
+        user_id, amount, description, category_id, transaction_date, type, recurrence, recurrence_every_days
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [user_id, normalizedAmount, description || '', resolvedCategoryId, normalizedDate, type]
+      [
+        user_id,
+        normalizedAmount,
+        description || '',
+        resolvedCategoryId,
+        normalizedDate,
+        type,
+        recurrence,
+        normalizedRecurrenceEveryDays
+      ]
     );
 
     return res.status(201).json(result.rows[0]);
