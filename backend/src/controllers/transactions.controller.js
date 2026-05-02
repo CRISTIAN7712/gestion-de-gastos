@@ -24,18 +24,38 @@ export async function listTransactions(req, res) {
 
 export async function createTransaction(req, res) {
   try {
-    const { amount, description, category_id, transaction_date, type } = req.body;
+    const { amount, description, category_id, category, transaction_date, date, type } = req.body;
     const user_id = req.user.id;
+    const normalizedAmount = Number(amount);
+    const normalizedDate = transaction_date || date || new Date();
 
     // Validaciones
-    if (!amount || !category_id || !type) {
-      return res.status(400).json({ error: 'Amount, category_id and type are required' });
+    if (!normalizedAmount || !type) {
+      return res.status(400).json({ error: 'Amount and type are required' });
+    }
+
+    let resolvedCategoryId = category_id;
+
+    if (!resolvedCategoryId && category) {
+      const upsertCategory = await pool.query(
+        `INSERT INTO categories (user_id, name, type)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, name, type)
+         DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [user_id, category.trim(), type]
+      );
+      resolvedCategoryId = upsertCategory.rows[0].id;
+    }
+
+    if (!resolvedCategoryId) {
+      return res.status(400).json({ error: 'category_id or category is required' });
     }
 
     // Verificar que la categoría pertenece al usuario
     const categoryCheck = await pool.query(
       'SELECT id FROM categories WHERE id = $1 AND user_id = $2',
-      [category_id, user_id]
+      [resolvedCategoryId, user_id]
     );
     
     if (categoryCheck.rows.length === 0) {
@@ -47,7 +67,7 @@ export async function createTransaction(req, res) {
       `INSERT INTO transactions (user_id, amount, description, category_id, transaction_date, type)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [user_id, amount, description || '', category_id, transaction_date || new Date(), type]
+      [user_id, normalizedAmount, description || '', resolvedCategoryId, normalizedDate, type]
     );
 
     return res.status(201).json(result.rows[0]);
