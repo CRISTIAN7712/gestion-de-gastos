@@ -15,7 +15,9 @@ export default function Dashboard() {
     setSummary(res.data);
   }
 
-  useEffect(() => { loadSummary(); }, [year, month]);
+  useEffect(() => {
+    loadSummary();
+  }, [year, month]);
 
   const chartData = useMemo(
     () => summary.expensesByCategory.map((item) => ({ name: item.name, value: Number(item.total) })),
@@ -23,13 +25,15 @@ export default function Dashboard() {
   );
 
   return (
-    <main className="space-y-6 p-4 md:p-6">
+    <main className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
       <header className="flex flex-wrap items-center gap-2">
-        <h1 className="text-2xl font-semibold">Dashboard financiero</h1>
-        <select className="rounded border p-2" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{m}</option>)}
+        <h1 className="mr-2 text-2xl font-semibold text-slate-800">Dashboard financiero</h1>
+        <select className="rounded-md border border-slate-300 bg-white p-2" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
         </select>
-        <input className="w-24 rounded border p-2" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+        <input className="w-28 rounded-md border border-slate-300 bg-white p-2" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
       </header>
 
       <section className="grid gap-4 sm:grid-cols-3">
@@ -39,10 +43,22 @@ export default function Dashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-xl border bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-lg font-medium">Gastos por categoría</h2>
-          <div className="h-72"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie dataKey="value" data={chartData} outerRadius={90} label>{chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer></div>
+        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-lg font-medium text-slate-800">Gastos por categoría</h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie dataKey="value" data={chartData} outerRadius={90} label>
+                  {chartData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </article>
+
         <QuickTransactionForm onCreated={loadSummary} />
       </section>
     </main>
@@ -50,25 +66,62 @@ export default function Dashboard() {
 }
 
 function Card({ title, value, tone }) {
-  const tones = { green: 'text-green-600', red: 'text-red-600', blue: 'text-blue-600' };
-  return <article className="rounded-xl border bg-white p-4 shadow-sm"><p className="text-sm text-gray-500">{title}</p><p className={`text-2xl font-semibold ${tones[tone]}`}>${Number(value).toFixed(2)}</p></article>;
+  const tones = {
+    green: 'text-green-600',
+    red: 'text-red-600',
+    blue: 'text-blue-600'
+  };
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-sm text-slate-500">{title}</p>
+      <p className={`text-2xl font-semibold ${tones[tone]}`}>${Number(value).toFixed(2)}</p>
+    </article>
+  );
 }
 
 function QuickTransactionForm({ onCreated }) {
   const today = new Date().toISOString().slice(0, 10);
   const [categories, setCategories] = useState([]);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({ amount: '', type: 'expense', transaction_date: today, category_id: '', description: '' });
 
-  useEffect(() => { api.get(`/categories?type=${form.type}`).then((r) => setCategories(r.data)); }, [form.type]);
+  useEffect(() => {
+    api.get(`/categories?type=${form.type}`).then((r) => setCategories(r.data));
+  }, [form.type]);
 
   async function submit(e) {
     e.preventDefault();
-    await api.post('/transactions', form);
-    setForm({ ...form, amount: '', description: '' });
-    onCreated();
+    setError('');
+    try {
+      await api.post('/transactions', form);
+      setForm((prev) => ({ ...prev, amount: '', description: '' }));
+      onCreated();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'No se pudo guardar el movimiento');
+    }
   }
 
   return (
-    <article className="rounded-xl border bg-white p-4 shadow-sm"><h2 className="mb-3 text-lg font-medium">Registrar movimiento rápido</h2><form className="grid gap-2 sm:grid-cols-2" onSubmit={submit}><input className="rounded border p-2" name="amount" type="number" step="0.01" placeholder="Monto" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /><select className="rounded border p-2" name="type" required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })}><option value="expense">Gasto</option><option value="income">Ingreso</option></select><input className="rounded border p-2" name="date" type="date" required value={form.transaction_date} onChange={(e) => setForm({ ...form, transaction_date: e.target.value })} /><select className="rounded border p-2" required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}><option value="">Selecciona categoría</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select><input className="sm:col-span-2 rounded border p-2" name="description" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><button className="sm:col-span-2 rounded bg-indigo-600 p-2 font-medium text-white">Guardar</button></form></article>
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 className="mb-3 text-lg font-medium text-slate-800">Registrar movimiento rápido</h2>
+      <form className="grid gap-2 sm:grid-cols-2" onSubmit={submit}>
+        <input className="rounded-md border border-slate-300 p-2" type="number" step="0.01" placeholder="Monto" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+        <select className="rounded-md border border-slate-300 p-2" required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })}>
+          <option value="expense">Gasto</option>
+          <option value="income">Ingreso</option>
+        </select>
+        <input className="rounded-md border border-slate-300 p-2" type="date" required value={form.transaction_date} onChange={(e) => setForm({ ...form, transaction_date: e.target.value })} />
+        <select className="rounded-md border border-slate-300 p-2" required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+          <option value="">Selecciona categoría</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <input className="sm:col-span-2 rounded-md border border-slate-300 p-2" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
+        <button className="sm:col-span-2 rounded-md bg-indigo-600 p-2 font-medium text-white hover:bg-indigo-700">Guardar</button>
+      </form>
+    </article>
   );
 }
