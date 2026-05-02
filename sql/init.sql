@@ -7,6 +7,13 @@ BEGIN
   END IF;
 END$$;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'recurrence_type') THEN
+    CREATE TYPE recurrence_type AS ENUM ('none', 'weekly', 'biweekly', 'monthly', 'custom_days');
+  END IF;
+END$$;
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(50) UNIQUE NOT NULL,
@@ -45,9 +52,16 @@ CREATE TABLE IF NOT EXISTS transactions (
   transaction_date DATE NOT NULL,
   description TEXT,
   type transaction_type NOT NULL,
+  recurrence recurrence_type NOT NULL DEFAULT 'none',
+  recurrence_every_days INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT transactions_user_category_check FOREIGN KEY (user_id, category_id)
-    REFERENCES categories(user_id, id)
+    REFERENCES categories(user_id, id),
+  CONSTRAINT transactions_recurrence_custom_days_check
+    CHECK (
+      (recurrence = 'custom_days' AND recurrence_every_days IS NOT NULL AND recurrence_every_days > 0)
+      OR (recurrence <> 'custom_days' AND recurrence_every_days IS NULL)
+    )
 );
 
 CREATE INDEX IF NOT EXISTS idx_categories_user_type ON categories(user_id, type);

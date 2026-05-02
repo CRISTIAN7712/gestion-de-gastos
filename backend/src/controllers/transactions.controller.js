@@ -24,18 +24,61 @@ export async function listTransactions(req, res) {
 
 export async function createTransaction(req, res) {
   try {
-    const { amount, description, category_id, transaction_date, type } = req.body;
+    const {
+      amount,
+      description,
+      category_id,
+      category,
+      transaction_date,
+      date,
+      type,
+      recurrence = 'none',
+      recurrence_every_days
+    } = req.body;
     const user_id = req.user.id;
+    const normalizedAmount = Number(amount);
+    const normalizedDate = transaction_date || date || new Date();
 
     // Validaciones
-    if (!amount || !category_id || !type) {
-      return res.status(400).json({ error: 'Amount, category_id and type are required' });
+    if (!normalizedAmount || !type) {
+      return res.status(400).json({ error: 'Amount and type are required' });
+    }
+
+    let resolvedCategoryId = category_id;
+
+    if (!resolvedCategoryId && category) {
+      const upsertCategory = await pool.query(
+        `INSERT INTO categories (user_id, name, type)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, name, type)
+         DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [user_id, category.trim(), type]
+      );
+      resolvedCategoryId = upsertCategory.rows[0].id;
+    }
+
+    if (!resolvedCategoryId) {
+      return res.status(400).json({ error: 'category_id or category is required' });
+    }
+
+    const allowedRecurrence = ['none', 'weekly', 'biweekly', 'monthly', 'custom_days'];
+    if (!allowedRecurrence.includes(recurrence)) {
+      return res.status(400).json({ error: 'Invalid recurrence value' });
+    }
+
+    let normalizedRecurrenceEveryDays = null;
+    if (recurrence === 'custom_days') {
+      normalizedRecurrenceEveryDays = Number(recurrence_every_days);
+      if (!normalizedRecurrenceEveryDays || normalizedRecurrenceEveryDays < 1) {
+        return res.status(400).json({ error: 'recurrence_every_days must be greater than 0 for custom_days' });
+      }
     }
 
     // Verificar que la categoría pertenece al usuario
     const categoryCheck = await pool.query(
       'SELECT id FROM categories WHERE id = $1 AND user_id = $2',
-      [category_id, user_id]
+      [resolvedCategoryId, user_id]
     );
     
     if (categoryCheck.rows.length === 0) {
@@ -44,10 +87,21 @@ export async function createTransaction(req, res) {
 
     // Insertar transacción
     const result = await pool.query(
-      `INSERT INTO transactions (user_id, amount, description, category_id, transaction_date, type)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO transactions (
+        user_id, amount, description, category_id, transaction_date, type, recurrence, recurrence_every_days
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [user_id, amount, description || '', category_id, transaction_date || new Date(), type]
+      [
+        user_id,
+        normalizedAmount,
+        description || '',
+        resolvedCategoryId,
+        normalizedDate,
+        type,
+        recurrence,
+        normalizedRecurrenceEveryDays
+      ]
     );
 
     return res.status(201).json(result.rows[0]);

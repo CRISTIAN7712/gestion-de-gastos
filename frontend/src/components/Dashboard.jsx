@@ -193,7 +193,9 @@ function QuickTransactionForm({ onSuccess }) {
     type: 'expense',
     date: new Date().toISOString().split('T')[0],
     category: '',
-    description: ''
+    description: '',
+    recurrence: 'none',
+    recurrence_every_days: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -204,15 +206,17 @@ function QuickTransactionForm({ onSuccess }) {
     setMessage({ type: '', text: '' });
 
     try {
-      await api.post('/transactions', {
+      const payload = {
         ...form,
-        amount: parseFloat(form.amount)
-      });
+        amount: parseFloat(form.amount),
+        recurrence_every_days: form.recurrence === 'custom_days' ? Number(form.recurrence_every_days) : null
+      };
+      await api.post('/transactions', payload);
       setMessage({ type: 'success', text: '✓ Movimiento registrado exitosamente' });
-      setForm({ ...form, amount: '', description: '', category: '' });
+      setForm({ ...form, amount: '', description: '', category: '', recurrence_every_days: '' });
       onSuccess?.();
     } catch (err) {
-      setMessage({ type: 'error', text: err?.response?.data?.message || 'Error al registrar' });
+      setMessage({ type: 'error', text: err?.response?.data?.error || err?.response?.data?.message || 'Error al registrar' });
     } finally {
       setSubmitting(false);
     }
@@ -300,6 +304,36 @@ function QuickTransactionForm({ onSuccess }) {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">Frecuencia</label>
+            <select
+              className="elegant-select"
+              value={form.recurrence}
+              onChange={(e) => setForm({ ...form, recurrence: e.target.value })}
+            >
+              <option value="none" className="bg-slate-800">Único (sin repetición)</option>
+              <option value="weekly" className="bg-slate-800">Semanal</option>
+              <option value="biweekly" className="bg-slate-800">Quincenal</option>
+              <option value="monthly" className="bg-slate-800">Mensual</option>
+              <option value="custom_days" className="bg-slate-800">Cada N días</option>
+            </select>
+          </div>
+          {form.recurrence === 'custom_days' && (
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">Cada cuántos días</label>
+              <input
+                className="elegant-input"
+                type="number"
+                min="1"
+                value={form.recurrence_every_days}
+                onChange={(e) => setForm({ ...form, recurrence_every_days: e.target.value })}
+                required
+              />
+            </div>
+          )}
         </div>
 
         <button 
