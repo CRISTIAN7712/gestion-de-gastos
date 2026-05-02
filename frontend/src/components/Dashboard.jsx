@@ -1,0 +1,127 @@
+import { useEffect, useMemo, useState } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { api } from '../api/client';
+
+const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#14b8a6'];
+
+export default function Dashboard() {
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, balance: 0, expensesByCategory: [] });
+
+  async function loadSummary() {
+    const res = await api.get(`/reports/summary?year=${year}&month=${month}`);
+    setSummary(res.data);
+  }
+
+  useEffect(() => {
+    loadSummary();
+  }, [year, month]);
+
+  const chartData = useMemo(
+    () => summary.expensesByCategory.map((item) => ({ name: item.name, value: Number(item.total) })),
+    [summary.expensesByCategory]
+  );
+
+  return (
+    <main className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
+      <header className="flex flex-wrap items-center gap-2">
+        <h1 className="mr-2 text-2xl font-semibold text-slate-800">Dashboard financiero</h1>
+        <select className="rounded-md border border-slate-300 bg-white p-2" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <input className="w-28 rounded-md border border-slate-300 bg-white p-2" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+      </header>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        <Card title="Ingresos" value={summary.totalIncome} tone="green" />
+        <Card title="Gastos" value={summary.totalExpense} tone="red" />
+        <Card title="Balance" value={summary.balance} tone="blue" />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-lg font-medium text-slate-800">Gastos por categoría</h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie dataKey="value" data={chartData} outerRadius={90} label>
+                  {chartData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </article>
+
+        <QuickTransactionForm onCreated={loadSummary} />
+      </section>
+    </main>
+  );
+}
+
+function Card({ title, value, tone }) {
+  const tones = {
+    green: 'text-green-600',
+    red: 'text-red-600',
+    blue: 'text-blue-600'
+  };
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-sm text-slate-500">{title}</p>
+      <p className={`text-2xl font-semibold ${tones[tone]}`}>${Number(value).toFixed(2)}</p>
+    </article>
+  );
+}
+
+function QuickTransactionForm({ onCreated }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ amount: '', type: 'expense', transaction_date: today, category_id: '', description: '' });
+
+  useEffect(() => {
+    api.get(`/categories?type=${form.type}`).then((r) => setCategories(r.data));
+  }, [form.type]);
+
+  async function submit(e) {
+    e.preventDefault();
+    setError('');
+    try {
+      await api.post('/transactions', form);
+      setForm((prev) => ({ ...prev, amount: '', description: '' }));
+      onCreated();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'No se pudo guardar el movimiento');
+    }
+  }
+
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 className="mb-3 text-lg font-medium text-slate-800">Registrar movimiento rápido</h2>
+      <form className="grid gap-2 sm:grid-cols-2" onSubmit={submit}>
+        <input className="rounded-md border border-slate-300 p-2" type="number" step="0.01" placeholder="Monto" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+        <select className="rounded-md border border-slate-300 p-2" required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })}>
+          <option value="expense">Gasto</option>
+          <option value="income">Ingreso</option>
+        </select>
+        <input className="rounded-md border border-slate-300 p-2" type="date" required value={form.transaction_date} onChange={(e) => setForm({ ...form, transaction_date: e.target.value })} />
+        <select className="rounded-md border border-slate-300 p-2" required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+          <option value="">Selecciona categoría</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <input className="sm:col-span-2 rounded-md border border-slate-300 p-2" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
+        <button className="sm:col-span-2 rounded-md bg-indigo-600 p-2 font-medium text-white hover:bg-indigo-700">Guardar</button>
+      </form>
+    </article>
+  );
+}
